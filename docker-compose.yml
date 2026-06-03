@@ -8,17 +8,23 @@ services:
   gst-producer-ball:
     build: ./gst-producer
     network_mode: host
+    env_file:
+      - ./gst-producer/.env
     environment:
       PATTERN: ball
 
   gst-producer-smpte:
     build: ./gst-producer
     network_mode: host
+    env_file:
+      - ./gst-producer/.env
     environment:
       PATTERN: smpte
 
   gst-producer-spokes:
     build: ./gst-producer
     network_mode: host
+    env_file:
+      - ./gst-producer/.env
     environment:
       PATTERN: spokes
