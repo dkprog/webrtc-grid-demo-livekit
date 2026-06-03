@@ -21,7 +21,7 @@ This is a fork of [webrtc-grid-demo](https://github.com/dkprog/webrtc-grid-demo)
 - Consumer: initial screen for consumers (`/`). Subscribes to the room and renders every published camera track in a grid.
 - Producer (`/producer`): open in another tab to publish a browser webcam into the room.
 
-Both roles join the same LiveKit room and fetch their access token from the LiveKit sandbox token server.
+Both roles join the same LiveKit room and fetch their access token from the LiveKit token server.
 
 ### gst-producer
 
@@ -35,20 +35,22 @@ The LiveKit Python SDK at this version does **not** accept already-encoded paylo
 
 ## Configuration
 
-Both services read their LiveKit connection details from environment files (gitignored). Create them before running:
+Both services get their access tokens from a [LiveKit Cloud](https://cloud.livekit.io/) project's **token server**. Enable it in the dashboard under **Settings → Options → Token server** and copy its ID into the variables below.
+
+Both services then read their LiveKit connection details from environment files. Create them before running:
 
 `gst-producer/.env`
 
 ```sh
 LIVEKIT_URL=wss://<your-project>.livekit.cloud
-LIVEKIT_TOKEN_SERVER_ID=<your-sandbox-token-server-id>
+LIVEKIT_TOKEN_SERVER_ID=<your-token-server-id>
 ```
 
 `web/.env`
 
 ```sh
 NEXT_PUBLIC_LIVEKIT_URL=wss://<your-project>.livekit.cloud
-NEXT_PUBLIC_LIVEKIT_TOKEN_SERVER_ID=<your-sandbox-token-server-id>
+NEXT_PUBLIC_LIVEKIT_TOKEN_SERVER_ID=<your-token-server-id>
 ```
 
 ## How to run
