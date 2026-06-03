@@ -26,8 +26,6 @@ class ProducerPipeline:
     pipeline: Gst.Pipeline
     src: Gst.Element
     caps_src: Gst.Element
-    videoconvert: Gst.Element
-    caps_rgba: Gst.Element
     sink: Gst.Element
 
     def __init__(self, loop: GLib.MainLoop, video_source: rtc.VideoSource):
@@ -47,20 +45,10 @@ class ProducerPipeline:
 
         self.caps_src = Gst.ElementFactory.make("capsfilter", "caps_src")
         caps = Gst.Caps.from_string(
-            f"video/x-raw,width={FRAME_WIDTH},height={FRAME_HEIGHT},framerate=30/1"
+            f"video/x-raw,format=RGBA,width={FRAME_WIDTH},height={FRAME_HEIGHT},framerate=30/1"
         )
         self.caps_src.set_property("caps", caps)
         self.pipeline.add(self.caps_src)
-
-        self.videoconvert = Gst.ElementFactory.make("videoconvert", "videoconvert")
-        self.pipeline.add(self.videoconvert)
-
-        self.caps_rgba = Gst.ElementFactory.make("capsfilter", "caps_rgba")
-        caps = Gst.Caps.from_string(
-            f"video/x-raw,format=RGBA,width={FRAME_WIDTH},height={FRAME_HEIGHT},framerate=30/1"
-        )
-        self.caps_rgba.set_property("caps", caps)
-        self.pipeline.add(self.caps_rgba)
 
         self.sink = Gst.ElementFactory.make("appsink", "sink")
         self.sink.set_property("emit-signals", True)
@@ -71,9 +59,7 @@ class ProducerPipeline:
 
     def link_elements(self) -> None:
         self.src.link(self.caps_src)
-        self.caps_src.link(self.videoconvert)
-        self.videoconvert.link(self.caps_rgba)
-        self.caps_rgba.link(self.sink)
+        self.caps_src.link(self.sink)
         self.sink.connect("new-sample", self.on_new_sample)
 
     def play(self) -> None:
