@@ -1,17 +1,25 @@
 # ruff: noqa: E402
 
 import gi  # type: ignore
+import asyncio
+import threading
 import logging
 import os
 import signal
+from livekit_token import fetch_token
+from livekit import rtc
 
 gi.require_version("Gst", "1.0")  # noqa
 
 from gi.repository import Gst, GLib  # type: ignore
 
+FRAME_SIZE = (320, 240)
+LIVEKIT_URL = os.environ["LIVEKIT_URL"]
 PATTERN = os.getenv("PATTERN", "ball")
 
+
 log = logging.getLogger(__name__)
+lk_loop = asyncio.new_event_loop()
 
 
 class ProducerPipeline:
@@ -40,7 +48,9 @@ class ProducerPipeline:
         self.pipeline.add(self.src)
 
         self.caps_src = Gst.ElementFactory.make("capsfilter", "caps_src")
-        caps = Gst.Caps.from_string("video/x-raw,width=320,height=240,framerate=30/1")
+        caps = Gst.Caps.from_string(
+            f"video/x-raw,width={FRAME_SIZE[0]},height={FRAME_SIZE[1]},framerate=30/1"
+        )
         self.caps_src.set_property("caps", caps)
         self.pipeline.add(self.caps_src)
 
@@ -140,15 +150,41 @@ class ProducerPipeline:
                 log.error("Error on shutdown: %s %s", err, dbg)
 
 
+async def livekit_main(video_source: rtc.VideoSource):
+    token = fetch_token()
+    room = rtc.Room()
+    await room.connect(LIVEKIT_URL, token)
+    log.info(f"LiveKit connected: {room.name}")
+
+    track = rtc.LocalVideoTrack.create_video_track("gst-video", video_source)
+    await room.local_participant.publish_track(
+        track,
+        rtc.TrackPublishOptions(source=rtc.TrackSource.SOURCE_CAMERA),
+    )
+    log.info("LiveKit track published")
+
+    await asyncio.Event().wait()
+
+
+def start_livekit(video_source: rtc.VideoSource):
+    asyncio.set_event_loop(lk_loop)
+    lk_loop.run_until_complete(livekit_main(video_source))
+
+
 if __name__ == "__main__":
     Gst.init(None)
 
-    peer_id = "foobar"
-
     logging.basicConfig(
         level=logging.INFO,
-        format=f"[gst-producer] [producer={peer_id}] [%(levelname)s] %(message)s",
+        format=f"[gst-producer] [pattern={PATTERN}] [%(levelname)s] %(message)s",
     )
+
+    video_source = rtc.VideoSource(width=FRAME_SIZE[0], height=FRAME_SIZE[1])
+
+    livekit_thread = threading.Thread(
+        target=start_livekit, args=(video_source,), daemon=True
+    )
+    livekit_thread.start()
 
     loop = GLib.MainLoop()
     producer_pipeline = ProducerPipeline(loop=loop)

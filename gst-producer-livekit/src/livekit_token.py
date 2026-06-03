@@ -15,6 +15,7 @@ def fetch_token() -> str:
         headers={"X-Sandbox-ID": LIVEKIT_TOKEN_SERVER_ID},
         json={
             "room_name": ROOM_NAME,
+            "participant_metadata": "producer",
         },
         timeout=10,
     )

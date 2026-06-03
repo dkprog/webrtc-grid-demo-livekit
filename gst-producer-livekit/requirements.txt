@@ -1,2 +1,3 @@
 livekit==1.1.9
 requests==2.34.2
+types-requests==2.33.0.20260518
