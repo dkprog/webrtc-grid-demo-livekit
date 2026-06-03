@@ -17,6 +17,8 @@ RUN apt-get update && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
+COPY requirements.txt /src/
+RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
 COPY src/ /src/
 
