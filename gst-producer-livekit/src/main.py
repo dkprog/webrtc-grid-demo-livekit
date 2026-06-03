@@ -4,9 +4,6 @@ import gi  # type: ignore
 import logging
 import os
 import signal
-import secrets
-from enum import Enum
-from typing import Any
 
 gi.require_version("Gst", "1.0")  # noqa
 
@@ -72,9 +69,11 @@ class ProducerPipeline:
         self.caps_rtp.set_property("caps", caps)
         self.pipeline.add(self.caps_rtp)
 
-        self.sink = Gst.ElementFactory.make("fakesink", "sink")
+        self.sink = Gst.ElementFactory.make("appsink", "sink")
+        self.sink.set_property("emit-signals", True)
         self.sink.set_property("sync", False)
-        self.sink.set_property("async", False)
+        self.sink.set_property("drop", True)
+        self.sink.set_property("max-buffers", 2)
         self.pipeline.add(self.sink)
 
     def link_elements(self) -> None:
@@ -85,6 +84,7 @@ class ProducerPipeline:
         self.vp8enc.link(self.rtppay)
         self.rtppay.link(self.caps_rtp)
         self.caps_rtp.link(self.sink)
+        self.sink.connect("new-sample", self.on_new_sample)
 
     def play(self) -> None:
         self.pipeline.set_state(Gst.State.PLAYING)
@@ -116,8 +116,16 @@ class ProducerPipeline:
             log.error("Error: %s %s", err, dbg)
             self.loop.quit()
 
+    def on_new_sample(self, sink: Gst.Element):
+        sample = sink.emit("pull-sample")
+        if not sample:
+            return Gst.FlowReturn.ERROR
+        buf = sample.get_buffer()
+        log.info(f"PTS: {buf.pts // Gst.MSECOND}ms  Size: {buf.get_size()} bytes")
+        return Gst.FlowReturn.OK
+
     def stop(self) -> None:
-        log.info("Stopping WebRTC Pipeline...")
+        log.info("Stopping Producer Pipeline...")
 
         self.pipeline.set_state(Gst.State.NULL)
 
