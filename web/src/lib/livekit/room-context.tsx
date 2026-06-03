@@ -37,3 +37,7 @@ export function RoomProvider({ children }: RoomContextProviderProps) {
 export function useRoom(): RoomContextValue {
   return useContext(RoomContext);
 }
+
+export function usePeerId(): string | undefined {
+  return useRoom().room?.localParticipant.sid;
+}
