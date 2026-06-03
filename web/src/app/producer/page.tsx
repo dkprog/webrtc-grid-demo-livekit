@@ -1,8 +1,8 @@
 'use client';
 
-import { WebcamProducer } from '@/features/producer-livekit/webcam-producer';
-import { RoomProvider } from '@/lib/livekit/room-context';
-import { TokenProvider } from '@/lib/livekit/token-context';
+import { WebcamProducer } from '@/features/producer/webcam-producer';
+import { RoomProvider } from '@/lib/conference/room-context';
+import { TokenProvider } from '@/lib/conference/token-context';
 
 export default function Page() {
   return (

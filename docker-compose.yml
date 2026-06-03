@@ -1,45 +1,24 @@
 services:
-  signaling:
-    build: ./signaling
-    network_mode: host
-    environment:
-      PORT: 3001
-
   web:
     build: ./web
     network_mode: host
     environment:
       PORT: 3000
-      NEXT_PUBLIC_SIGNALING_URL: http://localhost:3001
-    depends_on:
-      - signaling
 
   gst-producer-ball:
     build: ./gst-producer
     network_mode: host
     environment:
-      SIGNALING_URL: http://localhost:3001
-      STUN_SERVER: stun://stun.l.google.com:19302
       PATTERN: ball
-    depends_on:
-      - signaling
 
   gst-producer-smpte:
     build: ./gst-producer
     network_mode: host
     environment:
-      SIGNALING_URL: http://localhost:3001
-      STUN_SERVER: stun://stun.l.google.com:19302
       PATTERN: smpte
-    depends_on:
-      - signaling
 
   gst-producer-spokes:
     build: ./gst-producer
     network_mode: host
     environment:
-      SIGNALING_URL: http://localhost:3001
-      STUN_SERVER: stun://stun.l.google.com:19302
       PATTERN: spokes
-    depends_on:
-      - signaling

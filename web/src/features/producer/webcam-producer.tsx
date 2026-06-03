@@ -1,18 +1,17 @@
-'use client';
-
+import { useTracks } from '@livekit/components-react';
+import { usePeerId, useRoom } from '@/lib/conference/room-context';
 import { VideoTile } from '@/ui/video-tile';
-import { useEffect, useState } from 'react';
-import { useWebRTCProducer } from './use-webrtc-producer';
-import { usePeerId } from '@/lib/signaling/socket-context';
+import { useCallback, useEffect, useState } from 'react';
+import { Track } from 'livekit-client';
 
 type Status = 'idle' | 'loading' | 'connected' | 'error';
 
 export function WebcamProducer() {
+  const { room } = useRoom();
   const peerId = usePeerId();
+  const trackReferences = useTracks([Track.Source.Camera], { room });
   const [status, setStatus] = useState<Status>('loading');
   const [localStream, setLocalStream] = useState<MediaStream>();
-
-  useWebRTCProducer({ stream: localStream });
 
   useEffect(() => {
     if (peerId && status === 'loading') {
@@ -21,29 +20,31 @@ export function WebcamProducer() {
   }, [peerId, status]);
 
   useEffect(() => {
-    return () => {
-      localStream?.getTracks().forEach((track) => track.stop());
-    };
-  }, [localStream]);
+    const localRef = trackReferences.find((ref) => ref.participant.isLocal);
+    const track = localRef?.publication?.track;
+    if (track?.mediaStream) {
+      setLocalStream(track.mediaStream);
+    } else {
+      setLocalStream(undefined);
+    }
+  }, [trackReferences]);
 
-  const handleStart = async () => {
+  const handleStart = useCallback(async () => {
     setStatus('loading');
+    if (!room) {
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 240 },
-        audio: false,
-      });
-      setLocalStream(stream);
+      await room.localParticipant.setCameraEnabled(true);
       setStatus('connected');
     } catch (err) {
-      console.error(err);
       setStatus('error');
     }
-  };
+  }, [room]);
 
   return (
     <VideoTile
-      id={peerId}
+      id={room?.localParticipant.sid}
       stream={localStream}
       status={status}
       onStart={handleStart}

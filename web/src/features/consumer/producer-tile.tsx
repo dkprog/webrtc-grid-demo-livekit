@@ -1,4 +1,4 @@
-import { useRoom } from '@/lib/livekit/room-context';
+import { useRoom } from '@/lib/conference/room-context';
 import { VideoTile } from '@/ui/video-tile';
 import { TrackReference, useTracks } from '@livekit/components-react';
 import { RemoteParticipant, Track } from 'livekit-client';

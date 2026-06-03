@@ -1,6 +1,6 @@
 'use client';
 
-import { useRoom } from '@/lib/livekit/room-context';
+import { useRoom } from '@/lib/conference/room-context';
 import { ProducerCount } from './producer-count';
 import { useRemoteParticipants } from '@livekit/components-react';
 import { useMemo } from 'react';

@@ -1,6 +1,6 @@
 import { ProducerGrid } from '@/features/consumer/producer-grid';
-import { RoomProvider } from '@/lib/livekit/room-context';
-import { TokenProvider } from '@/lib/livekit/token-context';
+import { RoomProvider } from '@/lib/conference/room-context';
+import { TokenProvider } from '@/lib/conference/token-context';
 
 export default function Page() {
   return (
