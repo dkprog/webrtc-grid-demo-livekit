@@ -1,13 +1,15 @@
-import { ProducerCount } from '@/features/consumer/producer-count';
 import { ProducerGrid } from '@/features/consumer/producer-grid';
-import { SocketProvider } from '@/lib/signaling/socket-context';
+import { RoomProvider } from '@/lib/livekit/room-context';
+import { TokenProvider } from '@/lib/livekit/token-context';
 
 export default function Page() {
   return (
-    <main className="min-h-screen p-6 bg-gray-50">
-      <SocketProvider role="consumer">
-        <ProducerGrid />
-      </SocketProvider>
-    </main>
+    <TokenProvider role="consumer">
+      <RoomProvider>
+        <main className="min-h-screen p-6 bg-gray-50">
+          <ProducerGrid />
+        </main>
+      </RoomProvider>
+    </TokenProvider>
   );
 }

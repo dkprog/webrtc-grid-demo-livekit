@@ -6,7 +6,7 @@ import { TokenProvider } from '@/lib/livekit/token-context';
 
 export default function Page() {
   return (
-    <TokenProvider>
+    <TokenProvider role="producer">
       <RoomProvider>
         <main className="min-h-screen p-6 bg-gray-50">
           <WebcamProducer />
