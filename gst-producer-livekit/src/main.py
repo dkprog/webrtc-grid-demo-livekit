@@ -13,7 +13,7 @@ gi.require_version("Gst", "1.0")  # noqa
 
 from gi.repository import Gst, GLib  # type: ignore
 
-FRAME_SIZE = (320, 240)
+FRAME_WIDTH, FRAME_HEIGHT = 320, 240
 LIVEKIT_URL = os.environ["LIVEKIT_URL"]
 PATTERN = os.getenv("PATTERN", "ball")
 
@@ -33,8 +33,9 @@ class ProducerPipeline:
     caps_rtp: Gst.Element
     sink: Gst.Element
 
-    def __init__(self, loop: GLib.MainLoop):
+    def __init__(self, loop: GLib.MainLoop, video_source: rtc.VideoSource):
         self.loop = loop
+        self.video_source = video_source
 
     def create(self) -> None:
         self.pipeline = Gst.Pipeline.new(__package__)
@@ -49,7 +50,7 @@ class ProducerPipeline:
 
         self.caps_src = Gst.ElementFactory.make("capsfilter", "caps_src")
         caps = Gst.Caps.from_string(
-            f"video/x-raw,width={FRAME_SIZE[0]},height={FRAME_SIZE[1]},framerate=30/1"
+            f"video/x-raw,width={FRAME_WIDTH},height={FRAME_HEIGHT},framerate=30/1"
         )
         self.caps_src.set_property("caps", caps)
         self.pipeline.add(self.caps_src)
@@ -131,6 +132,16 @@ class ProducerPipeline:
         if not sample:
             return Gst.FlowReturn.ERROR
         buf = sample.get_buffer()
+        # ok, mapinfo = buf.map(Gst.MapFlags.READ)
+        # if ok:
+        # frame = rtc.VideoFrame(
+        #     width=FRAME_WIDTH,
+        #     height=FRAME_HEIGHT,
+        #     type=rtc.VideoBufferType.RGBA,
+        #     data=bytes(mapinfo.data),
+        # )
+        # self.video_source.capture_frame(frame)
+        # buf.unmap(mapinfo)
         log.info(f"PTS: {buf.pts // Gst.MSECOND}ms  Size: {buf.get_size()} bytes")
         return Gst.FlowReturn.OK
 
@@ -179,7 +190,7 @@ if __name__ == "__main__":
         format=f"[gst-producer] [pattern={PATTERN}] [%(levelname)s] %(message)s",
     )
 
-    video_source = rtc.VideoSource(width=FRAME_SIZE[0], height=FRAME_SIZE[1])
+    video_source = rtc.VideoSource(width=FRAME_WIDTH, height=FRAME_HEIGHT)
 
     livekit_thread = threading.Thread(
         target=start_livekit, args=(video_source,), daemon=True
@@ -187,7 +198,7 @@ if __name__ == "__main__":
     livekit_thread.start()
 
     loop = GLib.MainLoop()
-    producer_pipeline = ProducerPipeline(loop=loop)
+    producer_pipeline = ProducerPipeline(loop=loop, video_source=video_source)
     producer_pipeline.create()
     producer_pipeline.observe_events()
     producer_pipeline.play()
